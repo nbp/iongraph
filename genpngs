@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Use GNU parallel to generate dot files, if present.
 type parallel &>/dev/null &&
