@@ -94,7 +94,7 @@ def getBlockNodeName(b):
     return blockNumToNodeName(b['number'])
 
 # int -> node string with quotations
-def blockNumToNodeName(i):
+def blockNumToNodeName(i, dom = -1, pdom = -1):
     return quote('Block' + str(i))
 
 # resumePoint obj -> HTML-formatted string
@@ -121,10 +121,10 @@ def getMemInputsRow(list):
     if len(list) == 0:
         return ''
 
-    # Left column: caller.
+    # Left column: unused.
     memLeft = '<td align="left"></td>'
 
-    # Middle column: ordered contents of the MResumePoint.
+    # Middle column: list of instructions id on which this instruction depends on.
     insts = ''.join('%s ' % str(t) for t in list)
     memContents = '<td align="left"><font color="grey50">memory %s</font></td>' % insts
 
@@ -138,7 +138,11 @@ def getMemInputsRow(list):
 def getInstructionRow(inst):
     # Left column: instruction ID.
     instId = str(inst['id'])
-    instLabel = '<td align="right" port="i%s">%s</td>' % (instId, instId)
+    memContext = ''
+    if 'memContextId' in inst and inst['memContextId'] != "None":
+        memContext = str(inst['memContextId'])
+        memContext = '<font color="gray50">[%s]</font>' % memContext
+    instLabel = '<td align="right" port="i%s">%s %s</td>' % (instId, instId, memContext)
 
     # Middle column: instruction name.
     instName = cgi.escape(inst['opcode'])
@@ -147,6 +151,8 @@ def getInstructionRow(inst):
             instName = '<font color="gray50">%s</font>' % instName
         elif 'Movable' in inst['attributes']:
             instName = '<font color="blue">%s</font>' % instName
+        elif 'UseRemoved' in inst['attributes']:
+            instName = '<font color="green">%s</font>' % instName
         if 'NeverHoisted' in inst['attributes']:
             instName = '<u>%s</u>' % instName
         if 'InWorklist' in inst['attributes']:
@@ -164,15 +170,19 @@ def getInstructionRow(inst):
 def getBlockLabel(b):
     s =  '<<table border="0" cellborder="0" cellpadding="1">'
 
-    if 'blockUseCount' in b:
-        blockUseCount = "(Count: %s)" % str(b['blockUseCount'])
-    else:
-        blockUseCount = ""
-
-    blockTitle = '<font color="white">Block %s %s</font>' % (str(b['number']), blockUseCount)
+    dominatorInfo = ''
+    if 'dom' in b:
+        dominatorInfo = ' [%s, %s]' % (str(b['dom']), str(b['pdom']))
+    loopInfo = ''
+    if 'loopDepth' in b:
+        loopInfo = ' loopDepth: %s' % str(b['loopDepth'])
+    hitCount = ''
+    if 'count' in b:
+        hitCount = ' (hitCount: %s)' % str(b['count'])
+    blockTitle = '<font color="white">Block %s%s%s%s</font>' % (str(b['number']), dominatorInfo, loopInfo, hitCount)
     blockTitle = '<td align="center" bgcolor="black" colspan="3">%s</td>' % blockTitle
     s += '<tr>%s</tr>' % blockTitle
-    
+
     if 'resumePoint' in b:
         s += getResumePointRow(b['resumePoint'], None)
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 make_pdf_per_pass() {
 	# Use GNU parallel to generate dot files, if present.
